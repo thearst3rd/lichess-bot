@@ -21,9 +21,9 @@ class Game(threading.Thread):
 		self.is_white = white_id == player_id
 
 		stratName = type(strategy).__name__
-		print("stratName:", stratName)
 		client.bots.post_message(game_id, "Thanks for playing! Right now using strategy: " + stratName)
 		print(game_id, "GAME STARTED:", white_id, "vs", black_id)
+		print(game_id, "USING STRATEGY:", stratName)
 
 	def run(self):
 		for event in self.client.bots.stream_game_state(self.game_id):
