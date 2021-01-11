@@ -46,7 +46,7 @@ def main():
 			else:
 				client.bots.decline_challenge(event["challenge"]["id"])
 		elif event["type"] == "gameStart":
-			strategy = WorstfishStrategy()
+			strategy = SameOrOppositeColorStrategy(True)
 			game = Game(client, event["game"]["id"], player_id, strategy)
 			game.start()
 
