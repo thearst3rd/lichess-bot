@@ -8,7 +8,9 @@ import strategy
 
 class WorstfishStrategy(strategy.BaseStrategy):
 	def __init__(self):
-		self.engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+		with open("../stockfishPath.txt") as f:
+			stockfishPath = f.read().strip()
+		self.engine = chess.engine.SimpleEngine.popen_uci(stockfishPath)
 
 	def get_move(self, board: chess.Board) -> chess.Move:
 		moves = list(board.legal_moves)
