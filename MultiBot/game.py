@@ -20,10 +20,10 @@ class Game(threading.Thread):
 		black_id = info["players"]["black"]["user"]["id"]
 		self.is_white = white_id == player_id
 
-		stratName = type(strategy).__name__
+		stratName = strategy.get_name()
 		print(self.game_id, "GAME STARTED:", white_id, "vs", black_id)
 		print(self.game_id, "USING STRATEGY:", stratName)
-		self.send_chat("Thanks for playing! Right now using strategy: " + stratName)
+		self.send_chat("Thanks for playing! Right now using strategy: \"" + stratName + "\"")
 
 	def run(self):
 		for event in self.client.bots.stream_game_state(self.game_id):
