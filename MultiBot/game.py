@@ -21,9 +21,9 @@ class Game(threading.Thread):
 		self.is_white = white_id == player_id
 
 		stratName = type(strategy).__name__
-		client.bots.post_message(game_id, "Thanks for playing! Right now using strategy: " + stratName)
-		print(game_id, "GAME STARTED:", white_id, "vs", black_id)
-		print(game_id, "USING STRATEGY:", stratName)
+		print(self.game_id, "GAME STARTED:", white_id, "vs", black_id)
+		print(self.game_id, "USING STRATEGY:", stratName)
+		self.send_chat("Thanks for playing! Right now using strategy: " + stratName)
 
 	def run(self):
 		for event in self.client.bots.stream_game_state(self.game_id):
@@ -54,7 +54,10 @@ class Game(threading.Thread):
 			self.play_move(board)
 
 	def handle_chat_line(self, chat_line):
-		print(self.game_id, chat_line["username"], ":", chat_line["text"])
+		msg = chat_line["username"] + ": " + chat_line["text"]
+		if chat_line["room"] == "spectator":
+			msg = "[Spectator] " + msg
+		print(self.game_id, msg)
 
 	def play_move(self, board: chess.Board):
 		move = self.strategy.get_move(board)
@@ -65,3 +68,8 @@ class Game(threading.Thread):
 
 		board.push(move)
 		self.strategy.update_state(move, board)
+
+	def send_chat(self, chat_line):
+		print(self.game_id, "Sending message:", chat_line)
+		self.client.bots.post_message(self.game_id, chat_line)
+		self.client.bots.post_message(self.game_id, chat_line, spectator=True)
