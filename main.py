@@ -23,7 +23,7 @@ def should_accept(challenge):
 
 # Main loop, stream events and start playing games
 def main():
-	with open("../bot.token") as f:
+	with open("bot.token") as f:
 		token = f.read().strip()
 
 	session = berserk.TokenSession(token)
@@ -46,7 +46,7 @@ def main():
 			else:
 				client.bots.decline_challenge(event["challenge"]["id"])
 		elif event["type"] == "gameStart":
-			strategy = SameOrOppositeColorStrategy(True)
+			strategy = WorstfishStrategy()
 			game = Game(client, event["game"]["id"], player_id, strategy)
 			game.start()
 

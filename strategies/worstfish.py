@@ -10,13 +10,7 @@ import strategy
 
 class WorstfishStrategy(strategy.BaseStrategy):
 	def __init__(self):
-		try:
-			stockfishPath = os.environ["STOCKFISH_PATH"]
-		except KeyError:
-			print("ERROR")
-			print("Please set environment variable STOCKFISH_PATH to your stockfish executable")
-			os._exit(1)
-		self.engine = chess.engine.SimpleEngine.popen_uci(stockfishPath)
+		self.engine = chess.engine.SimpleEngine.popen_uci("stockfish")
 
 	def get_move(self, board: chess.Board) -> chess.Move:
 		moves = list(board.legal_moves)
