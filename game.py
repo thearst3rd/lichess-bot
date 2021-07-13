@@ -13,6 +13,7 @@ from strategies.random import RandomMoveStrategy
 from strategies.minopponentmoves import MinOpponentMovesStrategy
 from strategies.worstfish import WorstfishStrategy
 from strategies.sameoppcolor import SameOrOppositeColorStrategy
+from strategies.suicideking import SuicideKingStrategy
 
 class Game(threading.Thread):
 	def __init__(self, client: berserk.Client, game_id, player_id, strategy: strategy.BaseStrategy = None, **kwargs):
@@ -43,7 +44,7 @@ class Game(threading.Thread):
 		time_left = 15	# seconds
 
 		self.send_chat("Please select a strategy you would like me to play:")
-		self.send_chat("Random, Worstfish, Same Color, Opposite Color, Min Opponent Moves")
+		self.send_chat("Random, Worstfish, Same Color, Opposite Color, Min Opponent Moves, Suicide King")
 		self.send_chat("If you don't choose a strategy in " + str(time_left) + " seconds, I'll pick one at random.")
 
 		while True:
@@ -58,7 +59,8 @@ class Game(threading.Thread):
 					WorstfishStrategy(),
 					SameOrOppositeColorStrategy(True),
 					SameOrOppositeColorStrategy(False),
-					MinOpponentMovesStrategy()
+					MinOpponentMovesStrategy(),
+					SuicideKingStrategy(),
 				])
 				self.pick_strategy(random_strat)
 				break
@@ -126,6 +128,8 @@ class Game(threading.Thread):
 				self.pick_strategy(SameOrOppositeColorStrategy(False))
 			elif strat_name == "min opponent moves" or strat_name == "min":
 				self.pick_strategy(MinOpponentMovesStrategy())
+			elif strat_name == "suicide king" or strat_name == "suicide":
+				self.pick_strategy(SuicideKingStrategy())
 
 	def play_move(self, board: chess.Board):
 		move = self.strategy.get_move(board)
