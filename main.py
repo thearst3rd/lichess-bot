@@ -7,11 +7,6 @@ import chess
 
 from game import Game
 
-from strategies.random import RandomMoveStrategy
-from strategies.minopponentmoves import MinOpponentMovesStrategy
-from strategies.worstfish import WorstfishStrategy
-from strategies.sameoppcolor import SameOrOppositeColorStrategy
-
 # Only accept unrated challenges of standard games
 def should_accept(challenge):
 	if challenge["variant"]["key"] != "standard":
@@ -46,8 +41,7 @@ def main():
 			else:
 				client.bots.decline_challenge(event["challenge"]["id"])
 		elif event["type"] == "gameStart":
-			strategy = WorstfishStrategy()
-			game = Game(client, event["game"]["id"], player_id, strategy)
+			game = Game(client, event["game"]["id"], player_id)
 			game.start()
 
 if __name__ == "__main__":
