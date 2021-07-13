@@ -1,9 +1,7 @@
 # Bot that can play with multiple strategies
 # Created by Terry Hearst on 2020/12/29
 
-import random
 import berserk
-import chess
 
 from game import Game
 
@@ -34,7 +32,6 @@ def main():
 	print("Listening for events...")
 
 	for event in client.bots.stream_incoming_events():
-		#print("Global event received: " + event["type"])
 		if event["type"] == "challenge":
 			if should_accept(event["challenge"]):
 				client.bots.accept_challenge(event["challenge"]["id"])

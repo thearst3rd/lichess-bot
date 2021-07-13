@@ -78,7 +78,6 @@ class Game(threading.Thread):
 
 	def run(self):
 		for event in self.client.bots.stream_game_state(self.game_id):
-			#print("Game " + self.game_id + " event received: " + event["type"])
 			if event["type"] == "gameFull":
 				self.handle_state_change(event["state"])
 			elif event["type"] == "gameState":
@@ -106,6 +105,9 @@ class Game(threading.Thread):
 				self.current_game_state = game_state
 
 	def handle_chat_line(self, chat_line):
+		if chat_line["username"].lower() == self.player_id:
+			return
+
 		msg = chat_line["username"] + ": " + chat_line["text"]
 		if chat_line["room"] == "spectator":
 			msg = "[Spectator] " + msg
