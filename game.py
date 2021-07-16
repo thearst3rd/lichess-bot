@@ -29,13 +29,6 @@ class Game(threading.Thread):
 		self.is_white = white_id == player_id
 
 		print(self.game_id, "GAME STARTED:", white_id, "vs", black_id)
-		self.send_chat("Thanks for playing!")
-		self.current_game_state = None
-		if strategy is None:
-			self.strat_selector_thread = threading.Thread(target = self.strat_select_thread)
-			self.strat_selector_thread.start()
-		else:
-			self.pick_strategy(strategy)
 
 	def strat_select_thread(self):
 		# This function will run in a thread while the user is selecting a strategy. If the user picks a strategy, this
@@ -43,15 +36,16 @@ class Game(threading.Thread):
 
 		time_left = 15	# seconds
 
-		self.send_chat("Please select a strategy you would like me to play:")
-		self.send_chat("Random, Worstfish, Light Squares, Dark Squares, Min Opponent Moves, Suicide King")
-		self.send_chat("If you don't choose a strategy in " + str(time_left) + " seconds, I'll pick one at random.")
+		self.send_chat("Please select a strategy you would like me to play:", False)
+		self.send_chat("Random, Worstfish, Light Squares, Dark Squares, Min Opponent Moves, Suicide King", False)
+		self.send_chat("If you don't choose a strategy in " + str(time_left) + " seconds, I'll pick one at random.",
+				False)
 
 		while True:
 			if self.strategy is not None:
 				break
-			if time_left == 10 or time_left <= 5:
-				self.send_chat(str(time_left) + " seconds left")
+			if time_left == 10 or time_left == 5:
+				self.send_chat(str(time_left) + " seconds left", False)
 
 			if time_left == 0:
 				random_strat = random.choice([
@@ -81,6 +75,13 @@ class Game(threading.Thread):
 	def run(self):
 		for event in self.client.bots.stream_game_state(self.game_id):
 			if event["type"] == "gameFull":
+				self.send_chat("Thanks for playing!")
+				self.current_game_state = None
+				if self.strategy is None:
+					self.strat_selector_thread = threading.Thread(target = self.strat_select_thread)
+					self.strat_selector_thread.start()
+				else:
+					self.pick_strategy(self.strategy)
 				self.handle_state_change(event["state"])
 			elif event["type"] == "gameState":
 				self.handle_state_change(event)
@@ -93,14 +94,14 @@ class Game(threading.Thread):
 			print(self.game_id, "GAME OVER:", game_state["status"])
 			return
 
-		movesSplit = game_state["moves"].split()
+		moves_split = game_state["moves"].split()
 
 		# Is it our turn?
-		if len(movesSplit) % 2 == (0 if self.is_white else 1):
+		if len(moves_split) % 2 == (0 if self.is_white else 1):
 			if self.strategy is not None:
 				# Recreate the chess board from the moves
 				board = chess.Board()
-				for move in movesSplit:
+				for move in moves_split:
 					board.push(chess.Move.from_uci(move))
 				self.play_move(board)
 			else:
@@ -118,18 +119,19 @@ class Game(threading.Thread):
 		# Pick strategy
 		if self.strategy is None:
 			strat_name = chat_line["text"].lower()
-			if strat_name == "random":
-				self.pick_strategy(RandomMoveStrategy())
-			elif strat_name == "worstfish":
-				self.pick_strategy(WorstfishStrategy())
-			elif strat_name == "light squares" or strat_name == "light":
-				self.pick_strategy(LightOrDarkSquaresStrategy(chess.WHITE))
-			elif strat_name == "dark squares" or strat_name == "dark":
-				self.pick_strategy(LightOrDarkSquaresStrategy(chess.BLACK))
-			elif strat_name == "min opponent moves" or strat_name == "min":
-				self.pick_strategy(MinOpponentMovesStrategy())
-			elif strat_name == "suicide king" or strat_name == "suicide":
-				self.pick_strategy(SuicideKingStrategy())
+			if len(strat_name) >= 3:
+				if "random".startswith(strat_name):
+					self.pick_strategy(RandomMoveStrategy())
+				elif "worstfish".startswith(strat_name):
+					self.pick_strategy(WorstfishStrategy())
+				elif "light squares".startswith(strat_name):
+					self.pick_strategy(LightOrDarkSquaresStrategy(chess.WHITE))
+				elif "dark squares".startswith(strat_name):
+					self.pick_strategy(LightOrDarkSquaresStrategy(chess.BLACK))
+				elif "min opponent moves".startswith(strat_name):
+					self.pick_strategy(MinOpponentMovesStrategy())
+				elif "suicide king".startswith(strat_name):
+					self.pick_strategy(SuicideKingStrategy())
 
 	def play_move(self, board: chess.Board):
 		move = self.strategy.get_move(board)
@@ -141,7 +143,8 @@ class Game(threading.Thread):
 		board.push(move)
 		self.strategy.update_state(move, board)
 
-	def send_chat(self, chat_line):
-		print(self.game_id, "Sending message:", chat_line)
+	def send_chat(self, chat_line, to_spectators = True):
+		print(self.game_id, "Sending " + ("global" if to_spectators else "player") + " message:", chat_line)
 		self.client.bots.post_message(self.game_id, chat_line)
-		self.client.bots.post_message(self.game_id, chat_line, spectator=True)
+		if to_spectators:
+			self.client.bots.post_message(self.game_id, chat_line, spectator=True)
