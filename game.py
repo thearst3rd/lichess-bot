@@ -12,7 +12,7 @@ import strategy
 from strategies.random import RandomMoveStrategy
 from strategies.minopponentmoves import MinOpponentMovesStrategy
 from strategies.worstfish import WorstfishStrategy
-from strategies.sameoppcolor import SameOrOppositeColorStrategy
+from strategies.lightdarksquares import LightOrDarkSquaresStrategy
 from strategies.suicideking import SuicideKingStrategy
 
 class Game(threading.Thread):
@@ -44,7 +44,7 @@ class Game(threading.Thread):
 		time_left = 15	# seconds
 
 		self.send_chat("Please select a strategy you would like me to play:")
-		self.send_chat("Random, Worstfish, Same Color, Opposite Color, Min Opponent Moves, Suicide King")
+		self.send_chat("Random, Worstfish, Light Squares, Dark Squares, Min Opponent Moves, Suicide King")
 		self.send_chat("If you don't choose a strategy in " + str(time_left) + " seconds, I'll pick one at random.")
 
 		while True:
@@ -57,8 +57,8 @@ class Game(threading.Thread):
 				random_strat = random.choice([
 					RandomMoveStrategy(),
 					WorstfishStrategy(),
-					SameOrOppositeColorStrategy(True),
-					SameOrOppositeColorStrategy(False),
+					LightOrDarkSquaresStrategy(chess.WHITE),
+					LightOrDarkSquaresStrategy(chess.BLACK),
 					MinOpponentMovesStrategy(),
 					SuicideKingStrategy(),
 				])
@@ -122,10 +122,10 @@ class Game(threading.Thread):
 				self.pick_strategy(RandomMoveStrategy())
 			elif strat_name == "worstfish":
 				self.pick_strategy(WorstfishStrategy())
-			elif strat_name == "same color" or strat_name == "same":
-				self.pick_strategy(SameOrOppositeColorStrategy(True))
-			elif strat_name == "opposite color" or strat_name == "opposite":
-				self.pick_strategy(SameOrOppositeColorStrategy(False))
+			elif strat_name == "light squares" or strat_name == "light":
+				self.pick_strategy(LightOrDarkSquaresStrategy(chess.WHITE))
+			elif strat_name == "dark squares" or strat_name == "dark":
+				self.pick_strategy(LightOrDarkSquaresStrategy(chess.BLACK))
 			elif strat_name == "min opponent moves" or strat_name == "min":
 				self.pick_strategy(MinOpponentMovesStrategy())
 			elif strat_name == "suicide king" or strat_name == "suicide":
