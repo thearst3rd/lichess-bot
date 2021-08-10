@@ -7,21 +7,32 @@ import random
 import berserk
 import chess
 
-import strategy
+from chesstournament.strats import *
 
-from strategies.random import RandomMoveStrategy
-from strategies.minopponentmoves import MinOpponentMovesStrategy
-from strategies.worstfish import WorstfishStrategy
-from strategies.lightdarksquares import LightOrDarkSquaresStrategy
-from strategies.suicideking import SuicideKingStrategy
+strat_list = [
+	RandomMove,
+	MinResponses,
+	SuicideKing,
+	Stockfish,
+	GnuChess,
+	Worstfish,
+	LightSquares,
+	DarkSquares,
+	Equalizer,
+	Swarm,
+	Huddle,
+	LightSquaresHardMode,
+	DarkSquaresHardMode,
+]
 
 class Game(threading.Thread):
-	def __init__(self, client: berserk.Client, game_id, player_id, strategy: strategy.BaseStrategy = None, **kwargs):
+	def __init__(self, client: berserk.Client, game_id, player_id, strategy: Strategy = None, **kwargs):
 		super().__init__(**kwargs)
 		self.client = client
 		self.game_id = game_id
 		self.player_id = player_id
 		self.strategy = strategy
+		self.waiting = False
 
 		info = client.games.export(game_id)
 		white_id = info["players"]["white"]["user"]["id"]
@@ -36,37 +47,41 @@ class Game(threading.Thread):
 
 		time_left = 15	# seconds
 
-		self.send_chat("Please select a strategy you would like me to play:", False)
-		self.send_chat("Random, Worstfish, Light Squares, Dark Squares, Min Opponent Moves, Suicide King", False)
-		self.send_chat("If you don't choose a strategy in " + str(time_left) + " seconds, I'll pick one at random.",
-				False)
+		self.send_chat("Please select a strategy you would like me to use. A complete list of strategies can be found "
+				+ "here:", False)
+		names = list(map(lambda x: x.__name__, strat_list))
+		for i in range(len(names) - 1):
+			names[i] += ","
+		while len(names) > 0:
+			end_index = len(names)
+			while len(" ".join(names[:end_index])) > 140:
+				end_index -= 1
+			self.send_chat(" ".join(names[:end_index]), False)
+			names = names[end_index:]
+
+		self.send_chat("If you don't respond in 15 seconds, I'll pick a strat at random. Or, you can type \"wait\" I "
+				+ "won't pick a strat", False)
 
 		while True:
-			if self.strategy is not None:
+			if self.waiting or self.strategy is not None:
 				break
 			if time_left == 10 or time_left == 5:
 				self.send_chat(str(time_left) + " seconds left", False)
 
 			if time_left == 0:
-				random_strat = random.choice([
-					RandomMoveStrategy(),
-					WorstfishStrategy(),
-					LightOrDarkSquaresStrategy(chess.WHITE),
-					LightOrDarkSquaresStrategy(chess.BLACK),
-					MinOpponentMovesStrategy(),
-					SuicideKingStrategy(),
-				])
-				self.pick_strategy(random_strat)
+				self.pick_strategy()
 				break
 
 			time_left -= 1
 			time.sleep(1)
 
-	def pick_strategy(self, strategy):
-		self.strategy = strategy
-		strat_name = strategy.get_name()
-		print(self.game_id, "USING STRATEGY:", strat_name)
-		self.send_chat("Using strategy: \"" + strat_name + "\"")
+	def pick_strategy(self, strategy = None):
+		if strategy is None:
+			self.strategy = random.choice(strat_list)()
+			self.send_chat("Picking strategy: \"" + type(self.strategy).__name__ + "\"")
+		else:
+			self.strategy = strategy
+			self.send_chat("You chose strategy: \"" + type(self.strategy).__name__ + "\"")
 		if self.current_game_state is not None:
 			self.handle_state_change(self.current_game_state)
 			self.current_game_state = None
@@ -101,8 +116,10 @@ class Game(threading.Thread):
 			if self.strategy is not None:
 				# Recreate the chess board from the moves
 				board = chess.Board()
+				self.strategy.setup()
 				for move in moves_split:
 					board.push(chess.Move.from_uci(move))
+					self.strategy.update_state(board)
 				self.play_move(board)
 			else:
 				self.current_game_state = game_state
@@ -119,19 +136,14 @@ class Game(threading.Thread):
 		# Pick strategy
 		if self.strategy is None:
 			strat_name = chat_line["text"].lower()
+			if not self.waiting and strat_name == "wait":
+				self.waiting = True
+				self.send_chat("Waiting", False)
+				return
 			if len(strat_name) >= 3:
-				if "random".startswith(strat_name):
-					self.pick_strategy(RandomMoveStrategy())
-				elif "worstfish".startswith(strat_name):
-					self.pick_strategy(WorstfishStrategy())
-				elif "light squares".startswith(strat_name):
-					self.pick_strategy(LightOrDarkSquaresStrategy(chess.WHITE))
-				elif "dark squares".startswith(strat_name):
-					self.pick_strategy(LightOrDarkSquaresStrategy(chess.BLACK))
-				elif "min opponent moves".startswith(strat_name):
-					self.pick_strategy(MinOpponentMovesStrategy())
-				elif "suicide king".startswith(strat_name):
-					self.pick_strategy(SuicideKingStrategy())
+				for strat_class in strat_list:
+					if strat_class.__name__.lower().startswith(strat_name):
+						self.pick_strategy(strat_class())
 
 	def play_move(self, board: chess.Board):
 		move = self.strategy.get_move(board)
@@ -139,9 +151,6 @@ class Game(threading.Thread):
 		uci = move.uci()
 		print(self.game_id, "Sending move:", uci)
 		self.client.bots.make_move(self.game_id, uci)
-
-		board.push(move)
-		self.strategy.update_state(move, board)
 
 	def send_chat(self, chat_line, to_spectators = True):
 		print(self.game_id, "Sending " + ("global" if to_spectators else "player") + " message:", chat_line)

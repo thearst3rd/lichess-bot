@@ -1,0 +1,3 @@
+[submodule "chesstournament"]
+	path = chesstournament
+	url = https://github.com/thearst3rd/chess-tournament
