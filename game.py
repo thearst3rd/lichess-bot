@@ -2,6 +2,7 @@
 # Created by Terry Hearst on 2020/12/29
 
 import threading
+import datetime
 import time
 import random
 import berserk
@@ -149,6 +150,12 @@ class Game(threading.Thread):
 	def play_move(self, board: chess.Board, wtime = None, btime = None, winc = None, binc = None):
 		limit = None
 		if wtime is not None:
+			# Workaround - why is this needed???
+			if isinstance(wtime, datetime.datetime):
+				wtime = wtime.timestamp() * 1000
+				btime = btime.timestamp() * 1000
+				winc = winc.timestamp() * 1000
+				binc = binc.timestamp() * 1000
 			limit = chess.engine.Limit(
 					white_clock = float(wtime) / 1000.0,
 					black_clock = float(btime) / 1000.0,
