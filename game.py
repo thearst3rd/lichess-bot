@@ -6,6 +6,7 @@ import time
 import random
 import berserk
 import chess
+import chess.engine
 
 from chesstournament.strats import *
 
@@ -120,7 +121,7 @@ class Game(threading.Thread):
 				for move in moves_split:
 					board.push(chess.Move.from_uci(move))
 					self.strategy.update_state(board)
-				self.play_move(board)
+				self.play_move(board, game_state["wtime"], game_state["btime"], game_state["winc"], game_state["binc"])
 			else:
 				self.current_game_state = game_state
 
@@ -145,8 +146,15 @@ class Game(threading.Thread):
 					if strat_class.__name__.lower().startswith(strat_name):
 						self.pick_strategy(strat_class())
 
-	def play_move(self, board: chess.Board):
-		move = self.strategy.get_move(board)
+	def play_move(self, board: chess.Board, wtime = None, btime = None, winc = None, binc = None):
+		limit = None
+		if wtime is not None:
+			limit = chess.engine.Limit(
+					white_clock = float(wtime) / 1000.0,
+					black_clock = float(btime) / 1000.0,
+					white_inc = float(winc) / 1000.0,
+					black_inc = float(binc) / 1000.0)
+		move = self.strategy.get_move(board, limit = limit)
 
 		uci = move.uci()
 		print(self.game_id, "Sending move:", uci)
