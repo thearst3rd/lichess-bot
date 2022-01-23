@@ -8,6 +8,7 @@ import random
 import berserk
 import chess
 import chess.engine
+import shutil
 
 from chesstournament.strats import *
 
@@ -26,6 +27,17 @@ strat_list = [
 	LightSquaresHardMode,
 	DarkSquaresHardMode,
 ]
+
+# Remove engines if they can't be found
+if shutil.which("stockfish") is None:
+	print("Can't find stockfish, removing")
+	strat_list.remove(Stockfish)
+	strat_list.remove(Worstfish)
+	strat_list.remove(LightSquaresHardMode)
+	strat_list.remove(DarkSquaresHardMode)
+if shutil.which("gnuchessu") is None:
+	print("Can't find gnuchessu, removing")
+	strat_list.remove(GnuChess)
 
 class Game(threading.Thread):
 	def __init__(self, client: berserk.Client, game_id, player_id, strategy: Strategy = None, **kwargs):
