@@ -11,6 +11,8 @@ def should_accept(challenge):
 		return False
 	if challenge["rated"] != False:
 		return False
+	if challenge["timeControl"]["type"] != "clock":
+		return False
 
 	return True
 
