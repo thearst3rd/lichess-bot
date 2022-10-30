@@ -26,6 +26,7 @@ strat_list = [
 	Huddle,
 	LightSquaresHardMode,
 	DarkSquaresHardMode,
+	Possessed,
 ]
 
 # Remove engines if they can't be found
@@ -35,6 +36,7 @@ if shutil.which("stockfish") is None:
 	strat_list.remove(Worstfish)
 	strat_list.remove(LightSquaresHardMode)
 	strat_list.remove(DarkSquaresHardMode)
+	strat_list.remove(Possessed)
 if shutil.which("gnuchessu") is None:
 	print("Can't find gnuchessu, removing")
 	strat_list.remove(GnuChess)
