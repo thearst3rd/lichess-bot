@@ -160,6 +160,7 @@ class Game(threading.Thread):
 				for strat_class in strat_list:
 					if strat_class.__name__.lower().startswith(strat_name):
 						self.pick_strategy(strat_class())
+						break
 
 	def play_move(self, board: chess.Board, wtime = None, btime = None, winc = None, binc = None):
 		limit = None
