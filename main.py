@@ -7,14 +7,14 @@ from game import Game
 
 # Only accept unrated challenges of standard games
 def should_accept(challenge):
-	if challenge["variant"]["key"] != "standard":
-		return False
 	if challenge["rated"] != False:
-		return False
+		return berserk.Reason.CASUAL
 	if challenge["timeControl"]["type"] != "clock":
-		return False
+		return berserk.Reason.TIMECONTROL
+	if challenge["variant"]["key"] != "standard":
+		return berserk.Reason.STANDARD
 
-	return True
+	return None
 
 # Main loop, stream events and start playing games
 def main():
@@ -35,10 +35,11 @@ def main():
 
 	for event in client.bots.stream_incoming_events():
 		if event["type"] == "challenge":
-			if should_accept(event["challenge"]):
+			decline_reason = should_accept(event["challenge"])
+			if decline_reason is None:
 				client.bots.accept_challenge(event["challenge"]["id"])
 			else:
-				client.bots.decline_challenge(event["challenge"]["id"])
+				client.bots.decline_challenge(event["challenge"]["id"], decline_reason)
 		elif event["type"] == "gameStart":
 			game = Game(client, event["game"]["id"], player_id)
 			game.start()
